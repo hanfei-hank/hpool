@@ -1,0 +1,9 @@
+resolver: lts-13.13
+
+extra-package-dbs: []
+
+packages: 
+- .
+
+extra-deps:
+  - string-random-0.1.2.0

@@ -1,0 +1,33 @@
+# hpool start port
+# port: 8090
+
+# http服务器端口
+httpPort: 8081
+
+# verbose: provide log output
+verbose: True
+
+# Zcash server host
+# zcashHost: http://192.168.1.79/
+zcashHost: http://39.104.136.10/
+
+# Zcash server port
+#zcashPort: 18232
+zcashPort: 7847
+
+# redis host
+redisHost: 192.168.1.79
+# redis port
+redisPort: 6379
+
+# Zcash server username logs
+zcashUser: test
+
+# persistence directory
+zcashPassword: test
+
+minDiff: 1
+startDiff: 1
+maxDiff: 0
+
+updateInterval: 30
