@@ -1,10 +1,10 @@
-name:                seal-pool
+name:                hpool
 version:             0.1.0.0
-github:              githubuser/seal-pool
+github:              https://github.com/hanfei-hank/hpool
 license:             BSD3
-author:              Author name here
+author:              hanfei
 maintainer:          example@example.com
-copyright:           2019 Author name here
+copyright:           2019 hanfei
 
 extra-source-files:
 - README.md
@@ -79,7 +79,7 @@ executables:
     main:                Main.hs
     source-dirs:         app
     dependencies:
-    - seal-pool
+    - hpool
     - db-redis
     - optparse-simple
 
@@ -94,7 +94,7 @@ tests:
     source-dirs:         test
     dependencies:
     - db-redis
-    - seal-pool
+    - hpool
     - hspec
 
     ghc-options:

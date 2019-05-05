@@ -12,7 +12,7 @@ import RIO.Process
 import Options.Applicative.Simple
 import qualified Data.Yaml as Y
 
-import qualified Paths_seal_pool
+import qualified Paths_hpool
 import qualified DB
 
 
@@ -20,7 +20,7 @@ import qualified DB
 main :: IO ()
 main = do
   (options, ()) <- simpleOptions
-    $(simpleVersion Paths_seal_pool.version)
+    $(simpleVersion Paths_hpool.version)
     "猫池zcash Server"
     "接受矿机连接，统计算力，提交结果到主链"
     (Options
