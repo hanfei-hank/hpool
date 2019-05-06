@@ -11,10 +11,10 @@ import Control.Lens hiding(lens,set,Lens')
 import Util
 
 -- 主网event
-data MainnetEvent = BlockTemplateEvent | SubmitBlockEvent Text
+data Event = BlockTemplateEvent | SubmitBlockEvent Text
       deriving (Eq,Show)
 
-data MainnetNotify = ChangeDiff Text | ChangeJob TemplateData
+data Notify = ChangeDiff Text | ChangeJob TemplateData
     -- deriving (Eq, Show)
 
 data CoinBase = CoinBase {

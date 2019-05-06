@@ -23,10 +23,8 @@ import           Data.List ((!!))
 import           Data.Bits
 import           Data.Maybe (fromJust)
 
-import           Service.Mainnet.API
-import           Service.Miner.API
-import qualified Service.Mainnet.Impl as Mainnet
-import qualified Service.Miner.Impl as MS
+import Service.Mainnet.Impl as Mainnet
+import Service.Miner.Impl as MS
 
 
 
@@ -39,7 +37,7 @@ run port = do
     handleAppEvent mainnetChan appChan
 
 
-handleAppEvent :: Chan MainnetEvent -> Chan AppEvent -> RIO App ()
+handleAppEvent :: Chan Mainnet.Event -> Chan AppEvent -> RIO App ()
 handleAppEvent mainnetChan appChan = do
     logInfo "starting AppEvent handler"
 

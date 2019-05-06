@@ -8,7 +8,8 @@
 -- 主链有新块时调用http服务，http服务再通过socket调用getTemplateData方法
 module Service.Mainnet.Impl (
     start,
-    encodeSubmitData
+    encodeSubmitData,
+    module Service.Mainnet.API
     ) where
 
 import           Util
@@ -27,7 +28,7 @@ import qualified Data.ByteString.Char8 as C
 import           Data.Text (Text,pack)
 import           Data.List ((!!))
 
-start :: Chan MainnetEvent -> (MainnetNotify -> RIO App ()) -> RIO App ()
+start :: Chan Event -> (Notify -> RIO App ()) -> RIO App ()
 start chan nh = do
      -- 获取block数据
     _ <- async $ runMainnetService chan nh
@@ -36,7 +37,7 @@ start chan nh = do
     _ <- async $ blockUpdate chan
     logInfo "mainnet service started!"
 
-blockUpdate :: Chan MainnetEvent -> RIO App ()
+blockUpdate :: Chan Event -> RIO App ()
 blockUpdate chan = do
                 Config {..} <- asks appConfig 
                 forever $ do
@@ -48,7 +49,7 @@ blockUpdate chan = do
 type AppM = ReaderT HttpCtx Handler
 
 data HttpCtx = HttpCtx {
-    mainnetChan :: !(Chan MainnetEvent)
+    mainnetChan :: !(Chan Event)
 }
 
 type BlockApi = "block" :> Get '[JSON] Value 
@@ -56,7 +57,7 @@ type BlockApi = "block" :> Get '[JSON] Value
 blockApi :: S.Proxy BlockApi
 blockApi = S.Proxy
 
-runHttpServer :: Chan MainnetEvent -> RIO App ()
+runHttpServer :: Chan Event -> RIO App ()
 runHttpServer chan = do
     -- 获取端口
     config <- asks appConfig
@@ -85,7 +86,7 @@ blockHandler = do
 -------------------------------Network Interface-----------------------------------
 -----------------------------------------------------------------------------------
 
-runMainnetService :: Chan MainnetEvent -> (MainnetNotify -> RIO App ()) -> RIO App ()
+runMainnetService :: Chan Event -> (Notify -> RIO App ()) -> RIO App ()
 runMainnetService eventChan nh = do
     logInfo "starting mainnet services"
 

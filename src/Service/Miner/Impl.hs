@@ -1,7 +1,8 @@
 module Service.Miner.Impl (
     start,
     pattern PDifficulty,
-    pattern PNotify
+    pattern PNotify,
+    module Service.Miner.API
     ) where
 
 import           Types

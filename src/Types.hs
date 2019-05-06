@@ -20,7 +20,7 @@ import System.IO.Streams (OutputStream)
 import Network.Socket (PortNumber)
 import qualified DB
 
-import Service.Mainnet.API
+import Service.Mainnet.API as Mainnet
 import Service.Miner.API
 
 -- | Command line arguments
@@ -49,7 +49,7 @@ instance DB.HasConnection App where
 -- event 定义
 data AppEvent = 
     AEMiner   MinerNotify
-  | AEMainNet MainnetNotify
+  | AEMainNet Mainnet.Notify
 
 data PoolStats = PoolStats {  
     _pBlockChangeId   :: Word64,
