@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -13,7 +14,8 @@ module Service.Mainnet.Impl (
     ) where
 
 import           Util
-import           Import hiding (Handler)
+import           RIO hiding (Handler)
+import           Data.Generics.Product.Typed
 import           Service.Mainnet.API
 
 import           Data.Aeson.Types
@@ -28,7 +30,7 @@ import qualified Data.ByteString.Char8 as C
 import           Data.Text (Text,pack)
 import           Data.List ((!!))
 
-start :: Chan Event -> (Notify -> RIO App ()) -> RIO App ()
+start :: (HasLogFunc env, HasType Config env) => Chan Input -> (Output -> RIO env ()) -> RIO env ()
 start chan nh = do
      -- 获取block数据
     _ <- async $ runMainnetService chan nh
@@ -37,9 +39,9 @@ start chan nh = do
     _ <- async $ blockUpdate chan
     logInfo "mainnet service started!"
 
-blockUpdate :: Chan Event -> RIO App ()
+blockUpdate :: (HasLogFunc env, HasType Config env) => Chan Input -> RIO env ()
 blockUpdate chan = do
-                Config {..} <- asks appConfig 
+                Config {..} <- asks $ getTyped @Config
                 forever $ do
                             writeChan chan BlockTemplateEvent
                             logInfo $ "blockUpdate"
@@ -49,7 +51,7 @@ blockUpdate chan = do
 type AppM = ReaderT HttpCtx Handler
 
 data HttpCtx = HttpCtx {
-    mainnetChan :: !(Chan Event)
+    mainnetChan :: !(Chan Input)
 }
 
 type BlockApi = "block" :> Get '[JSON] Value 
@@ -57,10 +59,10 @@ type BlockApi = "block" :> Get '[JSON] Value
 blockApi :: S.Proxy BlockApi
 blockApi = S.Proxy
 
-runHttpServer :: Chan Event -> RIO App ()
+runHttpServer :: (HasLogFunc env, HasType Config env) => Chan Input -> RIO env ()
 runHttpServer chan = do
     -- 获取端口
-    config <- asks appConfig
+    config <- asks $ getTyped @Config
     let htx = HttpCtx chan
     let ctx = EmptyContext
     liftIO $ run (_httpPort config) $ mkApp ctx htx
@@ -86,11 +88,11 @@ blockHandler = do
 -------------------------------Network Interface-----------------------------------
 -----------------------------------------------------------------------------------
 
-runMainnetService :: Chan Event -> (Notify -> RIO App ()) -> RIO App ()
+runMainnetService :: (HasLogFunc env, HasType Config env) => Chan Input -> (Output -> RIO env ()) -> RIO env ()
 runMainnetService eventChan nh = do
     logInfo "starting mainnet services"
 
-    Config {..} <- asks appConfig
+    Config {..} <- asks getTyped
 
     --初始化http client,创建request
     manager <- liftIO $ newManager defaultManagerSettings  

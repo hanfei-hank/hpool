@@ -37,7 +37,7 @@ run port = do
     handleAppEvent mainnetChan appChan
 
 
-handleAppEvent :: Chan Mainnet.Event -> Chan AppEvent -> RIO App ()
+handleAppEvent :: Chan Mainnet.Input -> Chan AppEvent -> RIO App ()
 handleAppEvent mainnetChan appChan = do
     logInfo "starting AppEvent handler"
 
@@ -107,7 +107,7 @@ handleAppEvent mainnetChan appChan = do
                 job <- readIORef curJob
                 sendJob cliOuts job
                 -- 发送难度信息
-                Config {..} <- asks appConfig
+                AppConfig {..} <- asks appConfig
                 let ddiff = fromIntegral _startDiff :: Double
                 sendDiff cliOuts ddiff
             
@@ -131,7 +131,7 @@ handleAppEvent mainnetChan appChan = do
                                      
                 putMVar mret $ okResponse i
 
-                Config {..} <- asks appConfig
+                AppConfig {..} <- asks appConfig
                 let ddiff = fromIntegral _startDiff :: Double
                 updateMinerClient minerPool sessionid diff $ \_-> ddiff 
                 -- 发送难度信息

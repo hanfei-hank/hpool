@@ -10,11 +10,22 @@ import Control.Lens hiding(lens,set,Lens')
 
 import Util
 
+data Config = Config {
+  _httpPort :: !Int,
+  _zcashPort :: !Int,
+  _zcashUser :: !String,
+  _zcashPassword :: !String,
+  _zcashHost :: !String,
+  _updateInterval :: !Int
+  } deriving (Eq,Show,Generic)
+instance ToJSON Config where toJSON = lensyToJSON 1
+instance FromJSON Config where parseJSON = lensyParseJSON 1
+
 -- 主网event
-data Event = BlockTemplateEvent | SubmitBlockEvent Text
+data Input = BlockTemplateEvent | SubmitBlockEvent Text
       deriving (Eq,Show)
 
-data Notify = ChangeDiff Text | ChangeJob TemplateData
+data Output = ChangeDiff Text | ChangeJob TemplateData
     -- deriving (Eq, Show)
 
 data CoinBase = CoinBase {
@@ -62,5 +73,13 @@ data TemplateData = TemplateData {
 instance ToJSON TemplateData where toJSON = lensyToJSON 1
 instance FromJSON TemplateData where parseJSON = lensyParseJSON 1
 instance Default TemplateData where def = TemplateData Nothing Nothing Nothing Nothing def def "" "" def def def "" def def "" def def def "" def Nothing Nothing
+
+data BlockTemplate = BlockTemplate {
+  _result :: TemplateData,
+  _error :: Maybe Text,
+  _id :: Int
+} deriving (Show,Generic)
+instance ToJSON BlockTemplate where toJSON = lensyToJSON 1
+instance FromJSON BlockTemplate where parseJSON = lensyParseJSON 1
 
 makeLenses ''TemplateData

@@ -5,8 +5,7 @@ module Service.Miner.Impl (
     module Service.Miner.API
     ) where
 
-import           Types
-import           Import
+import           RIO
 import           Service.Miner.API
 import           Json
 import           Util    
@@ -20,7 +19,7 @@ import           Network.Socket(PortNumber)
 
 
 
-start :: PortNumber -> (MinerNotify -> RIO App ()) -> RIO App ()
+start :: HasLogFunc env => PortNumber -> (Output -> RIO env ()) -> RIO env ()
 start port nh = do
     sock <- liftIO $ TCP.bindAndListen 2 port
     _ <- async $ tcpServer sock $ minerServer nh
@@ -52,7 +51,7 @@ pattern PNotify p = Notif "mining.notify" p
 
 
 -- miner服务处理逻辑 
-minerServer :: (MinerNotify -> RIO App ()) -> TCP.TCPConnection -> RIO App ()
+minerServer :: HasLogFunc env => (Output -> RIO env ()) -> TCP.TCPConnection -> RIO env ()
 minerServer nh conn = do
     let sockAddr = show . snd $ connExtraInfo conn
     -- 创建任务处理队列

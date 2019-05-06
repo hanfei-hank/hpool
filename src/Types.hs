@@ -21,7 +21,7 @@ import Network.Socket (PortNumber)
 import qualified DB
 
 import Service.Mainnet.API as Mainnet
-import Service.Miner.API
+import Service.Miner.API as Miner
 
 -- | Command line arguments
 data Options = Options
@@ -33,10 +33,12 @@ data Options = Options
 data App = App
   { appLogFunc :: !LogFunc
   , appProcessContext :: !ProcessContext
-  , appConfig :: !Config
+
+  , appConfig :: !AppConfig
+  , mainnetConfig :: !Mainnet.Config
   -- Add other app-specific configuration information here
   , redisConn :: !DB.Connection -- redis数据库连接
-  }
+  } deriving (Generic)
 
 instance HasLogFunc App where
   logFuncL = lens appLogFunc (\x y -> x { appLogFunc = y })
@@ -48,8 +50,8 @@ instance DB.HasConnection App where
 
 -- event 定义
 data AppEvent = 
-    AEMiner   MinerNotify
-  | AEMainNet Mainnet.Notify
+    AEMiner   Miner.Output
+  | AEMainNet Mainnet.Output
 
 data PoolStats = PoolStats {  
     _pBlockChangeId   :: Word64,
@@ -162,33 +164,19 @@ type JobPool = IORef JobMap
 type SharePool = IORef ShareMap
                                                                   
 
-data Config = Config {
+data AppConfig = AppConfig {
   _verbose :: !Bool,
-  _httpPort :: !Int,
-  _zcashPort :: !Int,
-  _zcashUser :: !String,
-  _zcashPassword :: !String,
-  _zcashHost :: !String,
   _minDiff :: !Int,
   _startDiff :: !Int,
   _maxDiff :: !Int,
-  _updateInterval :: !Int,
   _redisHost :: !String,
   _redisPort :: !Word16
   } deriving (Eq,Show,Generic)
-instance ToJSON Config where toJSON = lensyToJSON 1
-instance FromJSON Config where parseJSON = lensyParseJSON 1
+instance ToJSON AppConfig where toJSON = lensyToJSON 1
+instance FromJSON AppConfig where parseJSON = lensyParseJSON 1
 
 
 
-
-data BlockTemplate = BlockTemplate {
-  _result :: TemplateData,
-  _error :: Maybe Text,
-  _id :: Int
-} deriving (Show,Generic)
-instance ToJSON BlockTemplate where toJSON = lensyToJSON 1
-instance FromJSON BlockTemplate where parseJSON = lensyParseJSON 1
 
 makeLenses ''PoolStats
 makeLenses ''MinerClient

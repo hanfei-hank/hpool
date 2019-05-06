@@ -11,7 +11,7 @@ import System.IO.Streams (OutputStream)
 
 type MinerID = String    -- 矿机ID
 
-data MinerNotify =
+data Output =
     MinerSubscribe Id MinerID (OutputStream Request) (MVar Response)
   | AuthClient Id MinerID Text Text (OutputStream Request) (MVar Response)
   | MinerDisconnect Int

@@ -20,29 +20,31 @@ extra-source-files:
 description:         Please see the README on Github at <https://github.com/githubuser/seal-pool#readme>
 
 dependencies:
-- base >= 4.11 && < 10
-- rio >= 0.1.8.0
 - aeson
 - attoparsec
-- io-streams
-- network
-- tcp-streams
-- http-client
-- http-types
-- text
-- yaml
-- bytestring
-- string-random
-- servant-server
-- warp
-- mtl
+- base >= 4.11 && < 10
 - base16-bytestring
-- random
-- memory
+- bytestring
 - cryptonite
 - data-default
+- generic-lens
+- http-client
+- http-types
+- io-streams
 - lens
+- lens-aeson
+- memory
+- mtl
+- network
+- random
+- rio >= 0.1.8.0
+- servant-server
+- string-random
+- tcp-streams
+- text
 - time
+- warp
+- yaml
 #- async-timer
 
 
