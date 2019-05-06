@@ -26,10 +26,10 @@ import qualified Data.ByteString.Char8 as C
 import           Data.Text (Text,pack)
 import           Data.List ((!!))
 
-start :: Chan MainnetEvent -> RIO App ()
-start chan = do
+start :: Chan MainnetEvent -> (MainnetNotify -> RIO App ()) -> RIO App ()
+start chan nh = do
      -- 获取block数据
-    _ <- async $ runMainnetService chan
+    _ <- async $ runMainnetService chan nh
     -- 启动http服务器
     _ <- async $ runHttpServer chan
     _ <- async $ blockUpdate chan
@@ -84,8 +84,8 @@ blockHandler = do
 -------------------------------Network Interface-----------------------------------
 -----------------------------------------------------------------------------------
 
-runMainnetService :: Chan MainnetEvent -> RIO App ()
-runMainnetService eventChan = do
+runMainnetService :: Chan MainnetEvent -> (MainnetNotify -> RIO App ()) -> RIO App ()
+runMainnetService eventChan nh = do
     logInfo "starting mainnet services"
 
     Config {..} <- asks appConfig
@@ -114,9 +114,9 @@ runMainnetService eventChan = do
                         -- todo:通知其他节点
                         let templateData = _result d
                         -- 设置难度系数
-                        --sendAppEvent $ ChangeDiff (_target templateData)
+                        --nh $ ChangeDiff (_target templateData)
                         -- 发送任务                                 
-                        sendAppEvent $ ChangeJob templateData
+                        nh $ ChangeJob templateData
                         -- logInfo $ displayShow $ d
             SubmitBlockEvent myData -> do
                 let requestObject = (object ["method" .= ("submitblock" :: Text), "id" .= (0 :: Int),"params" .= Array (V.fromList [String myData])])

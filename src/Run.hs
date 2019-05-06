@@ -31,14 +31,15 @@ import           Data.Maybe (fromJust)
 
 run :: PortNumber -> RIO App ()
 run port = do
+    appChan <- newChan
     mainnetChan <- newChan
-    Mainnet.start mainnetChan
-    MS.start port
-    handleAppEvent mainnetChan
+    Mainnet.start mainnetChan $ writeChan appChan . AEMainNet
+    MS.start port $ writeChan appChan . AEMiner
+    handleAppEvent mainnetChan appChan
 
 
-handleAppEvent :: Chan MainnetEvent -> RIO App ()
-handleAppEvent mainnetChan = do
+handleAppEvent :: Chan MainnetEvent -> Chan AppEvent -> RIO App ()
+handleAppEvent mainnetChan appChan = do
     logInfo "starting AppEvent handler"
 
     rand <- liftIO $ randomWord64
@@ -79,11 +80,10 @@ handleAppEvent mainnetChan = do
             logInfo $ "target:" <> displayShow targetValue
             mboxSend cliOuts $ MS.PDifficulty $ toJSON $ [targetValue]
     
-    eventChan <- asks appEventChan
     forever $ do
-        e <- readChan eventChan
+        e <- readChan appChan
         case e of
-            MinerSubscribe i sessionid cliOuts mret -> do
+            AEMiner (MinerSubscribe i sessionid cliOuts mret) -> do
                 
                 --加入矿机池
                 modifyIORef' minerPool $ Map.insert sessionid $ MinerClient sessionid def def def def def
@@ -112,10 +112,10 @@ handleAppEvent mainnetChan = do
                 let ddiff = fromIntegral _startDiff :: Double
                 sendDiff cliOuts ddiff
             
-            MinerDisconnect n -> do
+            AEMiner (MinerDisconnect n) -> do
                 logInfo $ "unregister miner " <> display n
 
-            AuthClient i sessionid usr pwd cliOuts mret -> do
+            AEMiner (AuthClient i sessionid usr pwd cliOuts mret) -> do
                 updateMinerClient minerPool sessionid authorised $ \_->True
                 stime <- liftIO getMillisTimeStamp
                 updateMinerClient minerPool sessionid startTime $ \_->stime
@@ -138,7 +138,7 @@ handleAppEvent mainnetChan = do
                 -- 发送难度信息
                 sendDiff cliOuts ddiff
 
-            FindNonce i sessionid n mret -> do
+            AEMiner (FindNonce i sessionid n mret) -> do
                 
                 nonce2Value <- getMinerClientField minerPool sessionid nonce2 ""
                 username    <- getMinerClientField minerPool sessionid userName ""
@@ -223,7 +223,7 @@ handleAppEvent mainnetChan = do
           
                                 putMVar mret $ okResponse i
  
-            ChangeJob templateData -> do
+            AEMainNet (ChangeJob templateData) -> do
                  -- 设置job
                 jobId' <- readIORef jobIdRef
                 secstime <- liftIO $ getSecsTimeStamp

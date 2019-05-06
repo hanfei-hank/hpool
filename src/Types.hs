@@ -32,7 +32,6 @@ data App = App
   , appProcessContext :: !ProcessContext
   , appConfig :: !Config
   -- Add other app-specific configuration information here
-  , appEventChan :: !(Chan AppEvent)
   , redisConn :: !DB.Connection -- redis数据库连接
   }
 
@@ -44,24 +43,23 @@ instance HasProcessContext App where
 instance DB.HasConnection App where
   conn = redisConn
 
-sendAppEvent :: AppEvent -> RIO App ()
-sendAppEvent e = do
-    chan <- asks appEventChan
-    writeChan chan e
-
 -- 主网event
 data MainnetEvent = BlockTemplateEvent | SubmitBlockEvent Text
       deriving (Eq,Show)
 
--- event 定义
-data AppEvent = 
+data MainnetNotify = ChangeDiff Text | ChangeJob TemplateData
+    -- deriving (Eq, Show)
+
+data MinerNotify =
     MinerSubscribe Id MinerID (OutputStream Request) (MVar Response)
   | AuthClient Id MinerID Text Text (OutputStream Request) (MVar Response)
   | MinerDisconnect Int
   | FindNonce Id MinerID [Text] (MVar Response)
-  | ChangeDiff Text
-  | ChangeJob TemplateData
 
+-- event 定义
+data AppEvent = 
+    AEMiner   MinerNotify
+  | AEMainNet MainnetNotify
 
 data PoolStats = PoolStats {  
     _pBlockChangeId   :: Word64,

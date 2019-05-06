@@ -18,10 +18,10 @@ import           Network.Socket(PortNumber)
 
 
 
-start :: PortNumber -> RIO App ()
-start port = do
+start :: PortNumber -> (MinerNotify -> RIO App ()) -> RIO App ()
+start port nh = do
     sock <- liftIO $ TCP.bindAndListen 2 port
-    _ <- async $ tcpServer sock minerServer
+    _ <- async $ tcpServer sock $ minerServer nh
     logInfo $ "Starting tcp server on port " <> displayShow port
 
 
@@ -50,8 +50,8 @@ pattern PNotify p = Notif "mining.notify" p
 
 
 -- miner服务处理逻辑 
-minerServer :: TCP.TCPConnection -> RIO App ()
-minerServer conn = do
+minerServer :: (MinerNotify -> RIO App ()) -> TCP.TCPConnection -> RIO App ()
+minerServer nh conn = do
     let sockAddr = show . snd $ connExtraInfo conn
     -- 创建任务处理队列
     (ins, outs) <- liftIO $ Streams.makeChanPipe
@@ -91,13 +91,13 @@ minerServer conn = do
             --生成新的sessionId
             -- sid <- liftIO $ randomText' 12 
             mret <- newEmptyMVar
-            sendAppEvent $ MinerSubscribe id sockAddr outs mret
+            nh $ MinerSubscribe id sockAddr outs mret
             ret <- takeMVar mret
             logInfo $ "mret :" <> displayShow ret
             sendResponse ret
             --sendMainnetEvent $ MainnetEvent "send mainnet event"
             return $ \action -> finally action $ do
-                sendAppEvent $ MinerDisconnect 0  
+                nh $ MinerDisconnect 0  
             
         -- 处理主循环
         go $ forever $ do
@@ -107,7 +107,7 @@ minerServer conn = do
                     MAuthorize i usr pwd -> do
                         logDebug $ display usr <> " : " <> display pwd
                         mret <- newEmptyMVar
-                        sendAppEvent $ AuthClient i sockAddr usr pwd outs mret
+                        nh $ AuthClient i sockAddr usr pwd outs mret
                         ret <- takeMVar mret
                         sendResponse ret
                     -- 难度下发
@@ -120,7 +120,7 @@ minerServer conn = do
                     MSubmit i p -> do
                         --logDebug $ displayShow p
                         mret <- newEmptyMVar
-                        sendAppEvent $ FindNonce i sockAddr p mret
+                        nh $ FindNonce i sockAddr p mret
                         ret <- takeMVar mret
                         sendResponse ret
 

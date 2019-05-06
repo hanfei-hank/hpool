@@ -41,12 +41,10 @@ main = do
   pc <- mkDefaultProcessContext
   conn <- DB.connect (_redisHost config) (_redisPort config)
   withLogFunc lo $ \lf -> do
-    eventChan <- newChan
     let app = App
           { appLogFunc = lf
           , appProcessContext = pc
           , appConfig = config
-          , appEventChan = eventChan
           , redisConn = conn
           }
     runRIO app (run $ optionsPort options)
