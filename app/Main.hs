@@ -8,15 +8,9 @@ module Main (main) where
 
 import Import
 import Run
-import RIO.Process
-import Control.Lens ((^?))
 import Options.Applicative.Simple hiding (Success)
-import Data.Aeson (Result(..), fromJSON)
-import Data.Aeson.Lens (key)
-import qualified Data.Yaml as Y
 
 import qualified Paths_hpool
-import qualified DB
 
 
 
@@ -36,25 +30,6 @@ main = do
                       <> help "config file")
     )
     empty
-  vconfig <- Y.decodeFileEither (optionsConfigPath options) >>= \case
-    Left e -> do
-            throwString ("Error loading config file: " ++ show e)
-    Right v -> return v
-  let Success config = fromJSON vconfig
-      Success mainnetc = fromJSONMaybe $ vconfig ^? key "mainnet"
-  lo <- logOptionsHandle stderr (_verbose config)
-  pc <- mkDefaultProcessContext
-  conn <- DB.connect (_redisHost config) (_redisPort config)
-  withLogFunc lo $ \lf -> do
-    let app = App
-          { appLogFunc = lf
-          , appProcessContext = pc
-          , appConfig = config
-          , mainnetConfig = mainnetc
-          , redisConn = conn
-          }
-    runRIO app (run $ optionsPort options)
 
+  startApp (optionsConfigPath options) $ optionsPort options
 
-fromJSONMaybe Nothing = Error "no value"
-fromJSONMaybe (Just v) = fromJSON v

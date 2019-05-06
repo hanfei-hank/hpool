@@ -3,8 +3,9 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE LambdaCase #-}
 
-module Run (run, Streams.makeChanPipe) where
+module Run (startApp, Streams.makeChanPipe) where
 
 import           Import
 import           Json
@@ -22,10 +23,37 @@ import           Data.Default
 import           Data.List ((!!))
 import           Data.Bits
 import           Data.Maybe (fromJust)
+import qualified Data.Yaml as Y
 
+import RIO.Process
+import Control.Lens ((^?))
+import Data.Aeson.Lens (key)
+import Options.Applicative.Simple hiding (Success)
+import qualified DB
 import Service.Mainnet.Impl as Mainnet
 import Service.Miner.Impl as MS
 
+startApp :: String -> PortNumber -> IO ()
+startApp file port = do
+  vconfig <- Y.decodeFileEither file >>= \case
+    Left e -> do
+            throwString ("Error loading config file: " ++ show e)
+    Right v -> return v
+  let Success config = fromJSON vconfig
+  mainnetc <- Mainnet.loadConfig vconfig 
+
+  lo <- logOptionsHandle stderr (_verbose config)
+  pc <- mkDefaultProcessContext
+  conn <- DB.connect (_redisHost config) (_redisPort config)
+  withLogFunc lo $ \lf -> do
+    let app = App
+          { appLogFunc = lf
+          , appProcessContext = pc
+          , appConfig = config
+          , mainnetConfig = mainnetc
+          , redisConn = conn
+          }
+    runRIO app (run port)
 
 
 run :: PortNumber -> RIO App ()

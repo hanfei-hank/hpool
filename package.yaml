@@ -36,6 +36,7 @@ dependencies:
 - memory
 - mtl
 - network
+- optparse-simple
 - random
 - rio >= 0.1.8.0
 - servant-server
@@ -83,7 +84,6 @@ executables:
     dependencies:
     - hpool
     - db-redis
-    - optparse-simple
 
     ghc-options:
     - -threaded
