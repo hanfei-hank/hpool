@@ -31,13 +31,14 @@ import           Data.Maybe (fromJust)
 
 run :: PortNumber -> RIO App ()
 run port = do
-    Mainnet.start
+    mainnetChan <- newChan
+    Mainnet.start mainnetChan
     MS.start port
-    handleAppEvent
+    handleAppEvent mainnetChan
 
 
-handleAppEvent :: RIO App ()
-handleAppEvent = do
+handleAppEvent :: Chan MainnetEvent -> RIO App ()
+handleAppEvent mainnetChan = do
     logInfo "starting AppEvent handler"
 
     rand <- liftIO $ randomWord64
@@ -197,7 +198,7 @@ handleAppEvent = do
                                                     modifyIORef' sharePool $ Map.insert (pack hashHex) (Share ((pack hashHex)) jobId')                                  
                                                     --提交block
                                                     let submitData = Mainnet.encodeSubmitData nonceSuf n tpdata
-                                                    sendMainnetEvent $ SubmitBlockEvent submitData
+                                                    writeChan mainnetChan $ SubmitBlockEvent submitData
                                                 _ -> putMVar mret $ errorResponse i "Duplicate"  
                                         else
                                             putMVar mret $ errorResponse i "Above target" 
@@ -210,7 +211,7 @@ handleAppEvent = do
                                                     modifyIORef' sharePool $ Map.insert (pack hashHex) (Share ((pack hashHex)) jobId')                                  
                                                     --提交block
                                                     let submitData = Mainnet.encodeSubmitData nonceSuf n tpdata
-                                                    sendMainnetEvent $ SubmitBlockEvent submitData
+                                                    writeChan mainnetChan $ SubmitBlockEvent submitData
                                                 _ -> putMVar mret $ errorResponse i "Duplicate"  
                                         else    
                                             putMVar mret $ errorResponse i "Above target"

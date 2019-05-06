@@ -33,7 +33,6 @@ data App = App
   , appConfig :: !Config
   -- Add other app-specific configuration information here
   , appEventChan :: !(Chan AppEvent)
-  , appMainnetChan :: !(Chan MainnetEvent)
   , redisConn :: !DB.Connection -- redis数据库连接
   }
 
@@ -48,11 +47,6 @@ instance DB.HasConnection App where
 sendAppEvent :: AppEvent -> RIO App ()
 sendAppEvent e = do
     chan <- asks appEventChan
-    writeChan chan e
-
-sendMainnetEvent :: MainnetEvent -> RIO App ()
-sendMainnetEvent e = do
-    chan <- asks appMainnetChan
     writeChan chan e
 
 -- 主网event

@@ -26,20 +26,20 @@ import qualified Data.ByteString.Char8 as C
 import           Data.Text (Text,pack)
 import           Data.List ((!!))
 
-start :: RIO App ()
-start = do
+start :: Chan MainnetEvent -> RIO App ()
+start chan = do
      -- 获取block数据
-    _ <- async $ runMainnetService
+    _ <- async $ runMainnetService chan
     -- 启动http服务器
-    _ <- async $ runHttpServer   
-    _ <- async $ blockUpdate
+    _ <- async $ runHttpServer chan
+    _ <- async $ blockUpdate chan
     logInfo "mainnet service started!"
 
-blockUpdate :: RIO App ()
-blockUpdate = do
+blockUpdate :: Chan MainnetEvent -> RIO App ()
+blockUpdate chan = do
                 Config {..} <- asks appConfig 
                 forever $ do
-                            sendMainnetEvent $ BlockTemplateEvent
+                            writeChan chan BlockTemplateEvent
                             logInfo $ "blockUpdate"
                             threadDelay $ _updateInterval*1000000
                 return ()
@@ -55,12 +55,10 @@ type BlockApi = "block" :> Get '[JSON] Value
 blockApi :: S.Proxy BlockApi
 blockApi = S.Proxy
 
-runHttpServer :: RIO App ()
-runHttpServer = do
+runHttpServer :: Chan MainnetEvent -> RIO App ()
+runHttpServer chan = do
     -- 获取端口
     config <- asks appConfig
-    -- 获取mainnet chan
-    chan <- asks appMainnetChan
     let htx = HttpCtx chan
     let ctx = EmptyContext
     liftIO $ run (_httpPort config) $ mkApp ctx htx
@@ -86,8 +84,8 @@ blockHandler = do
 -------------------------------Network Interface-----------------------------------
 -----------------------------------------------------------------------------------
 
-runMainnetService :: RIO App ()
-runMainnetService = do
+runMainnetService :: Chan MainnetEvent -> RIO App ()
+runMainnetService eventChan = do
     logInfo "starting mainnet services"
 
     Config {..} <- asks appConfig
@@ -98,8 +96,6 @@ runMainnetService = do
     let req = initialRequest { method = "POST", port = _zcashPort }
     let request = applyBasicAuth (C.pack _zcashUser) (C.pack _zcashPassword) req --增加授权
 
-    --获取mainnet input
-    eventChan <- asks appMainnetChan
     forever $ do 
         e <- readChan eventChan
         logInfo $ displayShow e
