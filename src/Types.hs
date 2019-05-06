@@ -20,6 +20,9 @@ import System.IO.Streams (OutputStream)
 import Network.Socket (PortNumber)
 import qualified DB
 
+import Service.Mainnet.API
+import Service.Miner.API
+
 -- | Command line arguments
 data Options = Options
   { 
@@ -42,19 +45,6 @@ instance HasProcessContext App where
 
 instance DB.HasConnection App where
   conn = redisConn
-
--- 主网event
-data MainnetEvent = BlockTemplateEvent | SubmitBlockEvent Text
-      deriving (Eq,Show)
-
-data MainnetNotify = ChangeDiff Text | ChangeJob TemplateData
-    -- deriving (Eq, Show)
-
-data MinerNotify =
-    MinerSubscribe Id MinerID (OutputStream Request) (MVar Response)
-  | AuthClient Id MinerID Text Text (OutputStream Request) (MVar Response)
-  | MinerDisconnect Int
-  | FindNonce Id MinerID [Text] (MVar Response)
 
 -- event 定义
 data AppEvent = 
@@ -157,7 +147,6 @@ data MinerClient = MinerClient {
 } deriving (Generic)
     
 
-type MinerID = String    -- 矿机ID
 type AccountID = String
 type JobID = Text
 type Hash = Text
@@ -190,52 +179,6 @@ data Config = Config {
 instance ToJSON Config where toJSON = lensyToJSON 1
 instance FromJSON Config where parseJSON = lensyParseJSON 1
 
-data CoinBase = CoinBase {
-  _data :: Text,
-  _hash :: Text
-  -- _depends :: [Int],
-  -- _fee :: Int,
-  -- _sigops :: Int,
-  -- _foundersreward :: Int,
-  -- _required :: Bool
-} deriving (Show,Generic)
-
-
-instance ToJSON CoinBase where toJSON = lensyToJSON 1
-instance FromJSON CoinBase where parseJSON = lensyParseJSON 1
-instance Default CoinBase where def = CoinBase "" ""
-
-
-data TemplateData = TemplateData {
-  _jobId           :: Maybe Word64,
-  _jobIdStr        :: Maybe Text,
-  _networkdiff  :: Maybe Double,
-  _genTime      :: Maybe Integer,
-  _capabilities :: ![Text],
-  _version      :: !Word32,
-  _previousblockhash :: Text,
-  _finalsaplingroothash :: Text,
-  _transactions :: [CoinBase],
-  _coinbasetxn :: CoinBase,
-  _longpollid :: String,
-  _target :: Text,
-  _mintime :: Int,
-  _mutable :: [String],
-  _noncerange :: Text,
-  _sigoplimit :: Int,
-  _sizelimit :: Int,
-  _curtime :: Int,
-  _bits :: Text,
-  _height :: Int,
-  _merkleroot :: Maybe Text,
-  _nonce :: Maybe Text
-} deriving (Show,Generic)
-
-
-
-instance ToJSON TemplateData where toJSON = lensyToJSON 1
-instance FromJSON TemplateData where parseJSON = lensyParseJSON 1
-instance Default TemplateData where def = TemplateData Nothing Nothing Nothing Nothing def def "" "" def def def "" def def "" def def def "" def Nothing Nothing
 
 
 
@@ -247,8 +190,6 @@ data BlockTemplate = BlockTemplate {
 instance ToJSON BlockTemplate where toJSON = lensyToJSON 1
 instance FromJSON BlockTemplate where parseJSON = lensyParseJSON 1
 
--- makeLenses ''CoinBase
-makeLenses ''TemplateData
 makeLenses ''PoolStats
 makeLenses ''MinerClient
 makeLenses ''MinerAccount

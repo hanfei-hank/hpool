@@ -11,8 +11,6 @@ import           Json
 import           Util
 import qualified RIO.Map as Map
 import           Data.Aeson 
-import qualified Mainnet
-import qualified MinerServer as MS
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Concurrent as Streams
 import           Network.Socket(PortNumber)
@@ -25,7 +23,10 @@ import           Data.List ((!!))
 import           Data.Bits
 import           Data.Maybe (fromJust)
 
-
+import           Service.Mainnet.API
+import           Service.Miner.API
+import qualified Service.Mainnet.Impl as Mainnet
+import qualified Service.Miner.Impl as MS
 
 
 

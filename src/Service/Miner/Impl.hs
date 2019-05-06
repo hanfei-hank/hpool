@@ -1,4 +1,4 @@
-module MinerServer (
+module Service.Miner.Impl (
     start,
     pattern PDifficulty,
     pattern PNotify
@@ -6,6 +6,7 @@ module MinerServer (
 
 import           Types
 import           Import
+import           Service.Miner.API
 import           Json
 import           Util    
 import           Data.Aeson 

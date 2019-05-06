@@ -6,13 +6,14 @@
 -- 与主网相关的接口
 -- http服务
 -- 主链有新块时调用http服务，http服务再通过socket调用getTemplateData方法
-module Mainnet (
+module Service.Mainnet.Impl (
     start,
     encodeSubmitData
     ) where
 
 import           Util
 import           Import hiding (Handler)
+import           Service.Mainnet.API
 
 import           Data.Aeson.Types
 import           Data.Aeson 
