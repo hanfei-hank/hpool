@@ -75,7 +75,7 @@ internal-libraries:
     reexported-modules: DB.Redis as DB
 
 executables:
-  seal-pool-exe:
+  hpool-exe:
     main:                Main.hs
     source-dirs:         app
     dependencies:
@@ -89,7 +89,7 @@ executables:
     - -with-rtsopts=-N
 
 tests:
-  seal-pool-test:
+  hpool-test:
     main:                Spec.hs
     source-dirs:         test
     dependencies:
