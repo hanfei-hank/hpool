@@ -8,7 +8,6 @@
 -- http服务
 -- 主链有新块时调用http服务，http服务再通过socket调用getTemplateData方法
 module Service.Mainnet.Impl (
-    loadConfig,
     start,
     encodeSubmitData,
     module Service.Mainnet.API
@@ -32,17 +31,6 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as C
 import           Data.Text (Text,pack)
 import           Data.List ((!!))
-
-serviceName = "mainnet"
-
-fromJSONMaybe Nothing = Error "no value"
-fromJSONMaybe (Just v) = fromJSON v
-
-loadConfig :: Value -> IO Config
-loadConfig v = 
-    case fromJSONMaybe $ v ^? key serviceName of
-        Success a -> return a
-        Error err -> throwString err
 
 start :: (HasLogFunc env, HasType Config env) => Chan Input -> (Output -> RIO env ()) -> RIO env ()
 start chan nh = do

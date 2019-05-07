@@ -26,9 +26,6 @@ import           Data.Maybe (fromJust)
 import qualified Data.Yaml as Y
 
 import RIO.Process
-import Control.Lens ((^?))
-import Data.Aeson.Lens (key)
-import Options.Applicative.Simple hiding (Success)
 import qualified DB
 import Service.Mainnet.Impl as Mainnet
 import Service.Miner.Impl as MS
@@ -36,11 +33,12 @@ import Service.Miner.Impl as MS
 startApp :: String -> PortNumber -> IO ()
 startApp file port = do
   vconfig <- Y.decodeFileEither file >>= \case
-    Left e -> do
-            throwString ("Error loading config file: " ++ show e)
+    Left e -> throwString ("Error loading config file: " ++ show e)
     Right v -> return v
-  let Success config = fromJSON vconfig
-  mainnetc <- Mainnet.loadConfig vconfig 
+  let Right (config, mainnetc) = do
+        c <- Y.parseEither parseJSON (Object vconfig)
+        m <- Y.parseEither (.: "mainnet") vconfig
+        return (c, m)
 
   lo <- logOptionsHandle stderr (_verbose config)
   pc <- mkDefaultProcessContext
