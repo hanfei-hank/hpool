@@ -5,7 +5,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Run (startApp, Streams.makeChanPipe) where
+module Run where
 
 import           Import
 import           Json
@@ -30,8 +30,8 @@ import qualified DB
 import Service.Mainnet.Impl as Mainnet
 import Service.Miner.Impl as MS
 
-startApp :: String -> PortNumber -> IO ()
-startApp file port = do
+loadConfig :: String -> IO (AppConfig, Mainnet.Config)
+loadConfig file = do
   vconfig <- Y.decodeFileEither file >>= \case
     Left e -> throwString ("Error loading config file: " ++ show e)
     Right v -> return v
@@ -39,7 +39,11 @@ startApp file port = do
         c <- Y.parseEither parseJSON (Object vconfig)
         m <- Y.parseEither (.: "mainnet") vconfig
         return (c, m)
+  return (config, mainnetc)
 
+startApp :: String -> PortNumber -> IO ()
+startApp file port = do
+  (config, mainnetc) <- loadConfig file
   lo <- logOptionsHandle stderr (_verbose config)
   pc <- mkDefaultProcessContext
   conn <- DB.connect (_redisHost config) (_redisPort config)
